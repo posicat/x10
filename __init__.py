@@ -14,37 +14,37 @@ from homeassistant.const import (
 
 import logging
 
-CONFIG_USE_SSH = "use_ssh"
-CONFIG_SSH_HOST = "ssh_host"
-CONFIG_SSH_USERNAME = "ssh_username"
-CONFIG_SSH_PASSWORD = "ssh_password"
-CONFIG_DEVICES = "devices"
-CONFIG_ID = "id"
-CONFIG_TYPE = "type"
-CONFIG_NAME = "name"
+_LOGGER = logging.getLogger(__name__)
 
-DOMAIN = 'x10'
+from .const import DOMAIN, CONFIG_USE_SSH, CONFIG_SSH_HOST, CONFIG_SSH_USERNAME, CONFIG_SSH_PASSWORD
+from homeassistant.const import CONF_ID, CONF_NAME, CONF_TYPE, CONF_DEVICES
 
 DEVICE_SCHEMA = vol.Schema(
     {
-        vol.Required(CONFIG_ID): cv.string,
-        vol.Required(CONFIG_TYPE): cv.string,
-        vol.Required(CONFIG_NAME): cv.string,
+        vol.Required(CONF_ID): cv.string,
+        vol.Required(CONF_NAME): cv.string,
+        vol.Required(CONF_TYPE): cv.string,
     },
+)
+X10_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONFIG_USE_SSH): cv.boolean,
+        vol.Optional(CONFIG_SSH_HOST): cv.string,
+        vol.Optional(CONFIG_SSH_USERNAME): cv.string,
+        vol.Optional(CONFIG_SSH_PASSWORD): cv.string,
+        vol.Optional(CONF_DEVICES): vol.All(
+            cv.ensure_list, [DEVICE_SCHEMA]
+        ),
+    }
 )
 
 CONFIG_SCHEMA = vol.Schema(
     {
-        DOMAIN: vol.Schema(
-            {
-                vol.Required(CONFIG_USE_SSH): cv.boolean,
-                vol.Optional(CONFIG_SSH_HOST): cv.string,
-                vol.Optional(CONFIG_SSH_USERNAME): cv.string,
-                vol.Optional(CONFIG_SSH_PASSWORD): cv.string,
-                vol.Optional(CONFIG_DEVICES): vol.Schema(DEVICE_SCHEMA),
-            }
+        vol.Optional(DOMAIN): vol.All(
+            cv.ensure_list, [X10_SCHEMA]
         )
     },
+    extra=vol.ALLOW_EXTRA,
 )
 
 def setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -56,12 +56,12 @@ def setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.data[DOMAIN] = {}
 
     for conf in config[DOMAIN]:
-        hass.data[DOMAIN][CONFIG_USE_SSH] = conf.get(CONFIG_USE_SSH),
-        hass.data[DOMAIN][CONFIG_SSH_HOST] = conf.get(CONFIG_SSH_HOST),
-        hass.data[DOMAIN][CONFIG_SSH_USERNAME] = conf.get(CONFIG_SSH_USERNAME),
-        hass.data[DOMAIN][CONFIG_SSH_PASSWORD] = conf.get(CONFIG_SSH_PASSWORD),
+        hass.data[DOMAIN][CONFIG_USE_SSH] = conf.get(CONFIG_USE_SSH)
+        hass.data[DOMAIN][CONFIG_SSH_HOST] = conf.get(CONFIG_SSH_HOST)
+        hass.data[DOMAIN][CONFIG_SSH_USERNAME] = conf.get(CONFIG_SSH_USERNAME)
+        hass.data[DOMAIN][CONFIG_SSH_PASSWORD] = conf.get(CONFIG_SSH_PASSWORD)
 
-    logger.debug(hass.data[DOMAIN])
+    _LOGGER.debug("Domain: " + hass.data[DOMAIN])
        
     hass.helpers.discovery.load_platform('light', DOMAIN, {}, config)
 

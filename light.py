@@ -6,7 +6,8 @@ import paramiko
 from subprocess import STDOUT, CalledProcessError, check_output
 from typing import Any
 
-from . import DOMAIN
+from .const import DOMAIN, CONFIG_USE_SSH, CONFIG_SSH_HOST, CONFIG_SSH_USERNAME, CONFIG_SSH_PASSWORD
+from homeassistant.const import CONF_ID, CONF_NAME, CONF_TYPE
 
 import voluptuous as vol
 
@@ -36,17 +37,16 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 
 def x10_command(command):
     """Execute X10 command and check output."""
-    
-    ### hass.data[DOMAIN][CONFIG_USE_SSH]
+    cmd = "heyu "+command
+    _LOGGER.error("x10_command:" + cmd)
     
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    host = hass.data[DOMAIN][CONFIG_SSH_HOST]
-    un = hass.data[DOMAIN][CONFIG_SSH_USERNAME] 
-    pw = hass.data[DOMAIN][CONFIG_SSH_PASSWORD]
-    ssh.connect(host, username=un, password=pw)
-    cmd = "heyu "+command
-    _LOGGER.error("cmd:" + cmd)
+    
+    _LOGGER.info("ssh_host:" + ssh_host)
+    _LOGGER.info("ssh_username:" + ssh_username)
+    _LOGGER.info("ssh_password:" + ssh_password)
+    ssh.connect(ssh_host, username=ssh_username, password=ssh_password)
 
     ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd)
 
@@ -62,23 +62,17 @@ def get_unit_status(code):
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    host = "xxx"
-    un = "xxx"
-    pw = "xxx"
-    ssh.connect(host, username=un, password=pw)
+    ssh.connect(ssh_host, username=ssh_username, password=ssh_password)
     cmd = "heyu onstate "+code
     ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd)
 
-    output = "\n".join(ssh_stdout.readlines())
-    output += "\n".join(ssh_stderr.readlines())
+    output = "\nstdout)".join(ssh_stdout.readlines())
+    output += "\nstderr)".join(ssh_stderr.readlines())
+    _LOGGER.error("output:" + output)
+
     ssh.close()
 
-    _LOGGER.error("output:" + output)
     return int(output)
-
-
-
-
 
 def setup_platform(
     hass: HomeAssistant,
@@ -87,6 +81,14 @@ def setup_platform(
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the x10 Light platform."""
+
+    _LOGGER.debug("Domain s_p: " + hass.data[DOMAIN])
+
+    use_ssh = hass.data[DOMAIN][CONFIG_USE_SSH]
+    ssh_host = hass.data[DOMAIN][CONFIG_SSH_HOST]
+    ssh_username = hass.data[DOMAIN][CONFIG_SSH_USERNAME] 
+    ssh_password = hass.data[DOMAIN][CONFIG_SSH_PASSWORD]
+
     is_cm11a = True
     try:
         x10_command("info")
