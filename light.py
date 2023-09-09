@@ -34,41 +34,52 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
-
-def x10_command(command):
+def x10_command(x10_config, command):
     """Execute X10 command and check output."""
     cmd = "heyu "+command
-    _LOGGER.error("x10_command:" + cmd)
+    _LOGGER.info("x10_command:" + cmd)
+
+###x10_config[use_ssh]
     
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     
-    _LOGGER.info("ssh_host:" + ssh_host)
-    _LOGGER.info("ssh_username:" + ssh_username)
-    _LOGGER.info("ssh_password:" + ssh_password)
-    ssh.connect(ssh_host, username=ssh_username, password=ssh_password)
-
+    # _LOGGER.info("ssh_host:" + x10_config[CONFIG_SSH_HOST])
+    # _LOGGER.info("ssh_username:" + x10_config[CONFIG_SSH_USERNAME])
+    # _LOGGER.info("ssh_password:" + x10_config[CONFIG_SSH_PASSWORD])
+    
+    ssh.connect(x10_config[CONFIG_SSH_HOST], username=x10_config[CONFIG_SSH_USERNAME], password=x10_config[CONFIG_SSH_PASSWORD])
     ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd)
 
-    output = "\n".join(ssh_stdout.readlines())
-    output += "\n".join(ssh_stderr.readlines())
+    output = "".join(ssh_stdout.readlines())
+    output += "".join(ssh_stderr.readlines())
+    output = output.replace("[\n]+","\n")
     ssh.close()
 
-    _LOGGER.error("output:" + output)
+    _LOGGER.info("output:" + output)
     return output
 
-def get_unit_status(code):
+def get_unit_status(x10_config,code):
     """Get on/off status for given unit."""
+    cmd = "heyu onstate "+code
+    _LOGGER.info("x10_command:" + cmd)
+
+###x10_config[use_ssh]
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(ssh_host, username=ssh_username, password=ssh_password)
-    cmd = "heyu onstate "+code
+
+    # _LOGGER.info("ssh_host:" + x10_config[CONFIG_SSH_HOST])
+    # _LOGGER.info("ssh_username:" + x10_config[CONFIG_SSH_USERNAME])
+    # _LOGGER.info("ssh_password:" + x10_config[CONFIG_SSH_PASSWORD])
+    
+    ssh.connect(x10_config[CONFIG_SSH_HOST], username=x10_config[CONFIG_SSH_USERNAME], password=x10_config[CONFIG_SSH_PASSWORD])
     ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd)
 
-    output = "\nstdout)".join(ssh_stdout.readlines())
-    output += "\nstderr)".join(ssh_stderr.readlines())
-    _LOGGER.error("output:" + output)
+    output = "".join(ssh_stdout.readlines())
+    output += "".join(ssh_stderr.readlines())
+    output = output.replace("[\n]+","\n")
+    _LOGGER.info("output:" + output)
 
     ssh.close()
 
@@ -82,21 +93,18 @@ def setup_platform(
 ) -> None:
     """Set up the x10 Light platform."""
 
-    _LOGGER.debug("Domain s_p: " + hass.data[DOMAIN])
+    x10_config = hass.data[DOMAIN]
 
-    use_ssh = hass.data[DOMAIN][CONFIG_USE_SSH]
-    ssh_host = hass.data[DOMAIN][CONFIG_SSH_HOST]
-    ssh_username = hass.data[DOMAIN][CONFIG_SSH_USERNAME] 
-    ssh_password = hass.data[DOMAIN][CONFIG_SSH_PASSWORD]
+    _LOGGER.info("Config: " + str(x10_config))
 
-    is_cm11a = True
+    x10_config['is_cm11a'] = True
     try:
-        x10_command("info")
+        x10_command(x10_config,"info")
     except CalledProcessError as err:
         _LOGGER.info("Assuming that the device is CM17A: %s", err.output)
-        is_cm11a = False
+        x10_config['is_cm11a'] = False
 
-    add_entities(X10Light(light, is_cm11a) for light in config[CONF_DEVICES])
+    add_entities(X10Light(light, x10_config) for light in x10_config[CONF_DEVICES])
 
 
 class X10Light(LightEntity):
@@ -105,13 +113,13 @@ class X10Light(LightEntity):
     _attr_color_mode = ColorMode.BRIGHTNESS
     _attr_supported_color_modes = {ColorMode.BRIGHTNESS}
 
-    def __init__(self, light, is_cm11a):
+    def __init__(self, light, x10_config):
         """Initialize an X10 Light."""
         self._name = light["name"]
         self._id = light["id"].upper()
         self._brightness = 0
         self._state = False
-        self._is_cm11a = is_cm11a
+        self._config = x10_config
         self._attr_unique_id = "X10."+ light["id"].upper()
 
     @property
@@ -131,25 +139,25 @@ class X10Light(LightEntity):
 
     def turn_on(self, **kwargs: Any) -> None:
         """Instruct the light to turn on."""
-        if self._is_cm11a:
-            x10_command(f"on {self._id}")
+        if self._config['is_cm11a']:
+            x10_command(self._config,f"on {self._id}")
         else:
-            x10_command(f"fon {self._id}")
+            x10_command(self._config,f"fon {self._id}")
         self._brightness = kwargs.get(ATTR_BRIGHTNESS, 255)
         self._state = True
 
     def turn_off(self, **kwargs: Any) -> None:
         """Instruct the light to turn off."""
-        if self._is_cm11a:
-            x10_command(f"off {self._id}")
+        if self._config['is_cm11a']:
+            x10_command(self._config,f"off {self._id}")
         else:
-            x10_command(f"foff {self._id}")
+            x10_command(self._config,f"foff {self._id}")
         self._state = False
 
     def update(self) -> None:
         """Fetch update state."""
-        if self._is_cm11a:
-            self._state = bool(get_unit_status(self._id))
+        if self._config['is_cm11a']:
+            self._state = bool(get_unit_status(self._config,self._id))
         else:
             # Not supported on CM17A
             pass

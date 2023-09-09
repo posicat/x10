@@ -54,14 +54,17 @@ def setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     # Data that you want to share with your platforms
     hass.data[DOMAIN] = {}
-
+    x10_config = {}
+    
     for conf in config[DOMAIN]:
-        hass.data[DOMAIN][CONFIG_USE_SSH] = conf.get(CONFIG_USE_SSH)
-        hass.data[DOMAIN][CONFIG_SSH_HOST] = conf.get(CONFIG_SSH_HOST)
-        hass.data[DOMAIN][CONFIG_SSH_USERNAME] = conf.get(CONFIG_SSH_USERNAME)
-        hass.data[DOMAIN][CONFIG_SSH_PASSWORD] = conf.get(CONFIG_SSH_PASSWORD)
+        x10_config[CONFIG_USE_SSH] = conf.get(CONFIG_USE_SSH)
+        x10_config[CONFIG_SSH_HOST] = conf.get(CONFIG_SSH_HOST)
+        x10_config[CONFIG_SSH_USERNAME] = conf.get(CONFIG_SSH_USERNAME)
+        x10_config[CONFIG_SSH_PASSWORD] = conf.get(CONFIG_SSH_PASSWORD)
+        x10_config[CONF_DEVICES] = conf.get(CONF_DEVICES)
 
-    _LOGGER.debug("Domain: " + hass.data[DOMAIN])
+    hass.data[DOMAIN] = x10_config;
+    _LOGGER.debug("Domain: " + str(hass.data[DOMAIN]))
        
     hass.helpers.discovery.load_platform('light', DOMAIN, {}, config)
 
