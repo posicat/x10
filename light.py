@@ -37,11 +37,13 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 def x10_command(command):
     """Execute X10 command and check output."""
     
+    ### hass.data[DOMAIN][CONFIG_USE_SSH]
+    
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    host = "xxx"
-    un = "xxx"
-    pw = "xxx"
+    host = hass.data[DOMAIN][CONFIG_SSH_HOST]
+    un = hass.data[DOMAIN][CONFIG_SSH_USERNAME] 
+    pw = hass.data[DOMAIN][CONFIG_SSH_PASSWORD]
     ssh.connect(host, username=un, password=pw)
     cmd = "heyu "+command
     _LOGGER.error("cmd:" + cmd)
