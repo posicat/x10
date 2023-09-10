@@ -6,4 +6,9 @@ CONFIG_SSH_USERNAME = "ssh_username"
 CONFIG_SSH_PASSWORD = "ssh_password"
 CONFIG_DEVICES = "devices"
 
+TYPE_LIGHT = "light"
+TYPE_SWITCH = "switch"
+TYPE_APPLIANCE = "appliance"
+TYPE_SENSOR = "sensor"
+
 DOMAIN = 'x10'

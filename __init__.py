@@ -16,8 +16,9 @@ import logging
 
 _LOGGER = logging.getLogger(__name__)
 
-from .const import DOMAIN, CONFIG_USE_SSH, CONFIG_SSH_HOST, CONFIG_SSH_USERNAME, CONFIG_SSH_PASSWORD
 from homeassistant.const import CONF_ID, CONF_NAME, CONF_TYPE, CONF_DEVICES
+from .const import *
+from .common import *
 
 DEVICE_SCHEMA = vol.Schema(
     {
@@ -55,17 +56,28 @@ def setup(hass: HomeAssistant, config: ConfigType) -> bool:
     # Data that you want to share with your platforms
     hass.data[DOMAIN] = {}
     x10_config = {}
+    x10_config[CONF_DEVICES] = {}
     
     for conf in config[DOMAIN]:
         x10_config[CONFIG_USE_SSH] = conf.get(CONFIG_USE_SSH)
         x10_config[CONFIG_SSH_HOST] = conf.get(CONFIG_SSH_HOST)
         x10_config[CONFIG_SSH_USERNAME] = conf.get(CONFIG_SSH_USERNAME)
         x10_config[CONFIG_SSH_PASSWORD] = conf.get(CONFIG_SSH_PASSWORD)
-        x10_config[CONF_DEVICES] = conf.get(CONF_DEVICES)
+        for device in conf.get(CONF_DEVICES):
+            type = device[CONF_TYPE]
+
+            if (type == TYPE_APPLIANCE): # X10 calls them appliances, in HA they're switches
+                type = TYPE_SWITCH
+            if (not type in x10_config[CONF_DEVICES]):
+                x10_config[CONF_DEVICES][type] = []
+
+            x10_config[CONF_DEVICES][type].append(device)
 
     hass.data[DOMAIN] = x10_config;
-    _LOGGER.debug("Domain: " + str(hass.data[DOMAIN]))
-       
+    # _LOGGER.debug("Domain: " + str(hass.data[DOMAIN]))
+    
+    hass.helpers.discovery.load_platform('sensor', DOMAIN, {}, config)
     hass.helpers.discovery.load_platform('light', DOMAIN, {}, config)
-
+    hass.helpers.discovery.load_platform('switch', DOMAIN, {}, config)
+       
     return success
