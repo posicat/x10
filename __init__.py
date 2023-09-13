@@ -48,6 +48,19 @@ CONFIG_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA,
 )
 
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up Hello World from a config entry."""
+    # Store an instance of the "connecting" class that does the work of speaking
+    # with your actual devices.
+
+    e=entry
+    h=hass
+
+    _LOGGER.debug("Entry : " + str(e))
+    _LOGGER.debug("hass : " + str(h))
+
+    return True
+
 def setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Your controller/hub specific code."""
     
