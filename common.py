@@ -42,3 +42,10 @@ def get_unit_status(x10_config,code):
     output = x10_command(x10_config,command)
 
     return int(output)
+
+def common_init(self,device,x10_config):
+    self._name = device["name"]
+    self._attr_unique_id = "X10." + device["type"] + "." + device["id"].upper()
+    self._id = device["id"].upper()
+    self._state = False
+    self._config = x10_config

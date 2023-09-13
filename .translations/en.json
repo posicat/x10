@@ -1,0 +1,18 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Connect to the Heyu service",
+                "data": {
+                    "use_ssh": "Use SSH for remote call?",
+                    "ssh_host": "[%key:common::config_flow::data::host%]",
+                    "ssh_username": "[%key:common::config_flow::data::username%]",
+                    "ssh_password": "[%key:common::config_flow::data::password%]"
+                }
+            }
+        }
+    },
+    "abort": {
+        "already_configured": "Device is already configured"
+    }
+}

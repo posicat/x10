@@ -53,12 +53,8 @@ class X10Light(LightEntity):
 
     def __init__(self, light, x10_config):
         """Initialize an X10 Light."""
-        self._name = light["name"]
-        self._id = light["id"].upper()
+        common_init(self,light,x10_config)
         self._brightness = 0
-        self._state = False
-        self._config = x10_config
-        self._attr_unique_id = "X10."+ light["id"].upper()
 
     @property
     def name(self):

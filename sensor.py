@@ -48,11 +48,7 @@ class X10Sensor(SensorEntity):
 
     def __init__(self, sensor, x10_config):
         """Initialize an X10 Sensor."""
-        self._name = sensor["name"]
-        self._id = sensor["id"].upper()
-        self._state = False
-        self._config = x10_config
-        self._attr_unique_id = "X10."+ sensor["id"].upper()
+        common_init(self,sensor,x10_config)
 
     @property
     def name(self):

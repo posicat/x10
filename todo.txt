@@ -1,0 +1,21 @@
+Remove individual polling calls
+
+Background proc to poll all items
+    heyu monitor - receive events
+
+    get dimstate
+    get on state
+    find any new X10 modules commanded
+
+Light
+    add dim/bri !!!
+
+Sensors
+    config entity icon?
+
+
+Heyu Processes
+    Background process check if started, if not start
+    Engine check if started, if not start
+
+    Remove manual start of engine from server

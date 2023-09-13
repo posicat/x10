@@ -48,11 +48,7 @@ class X10Switch(SwitchEntity):
 
     def __init__(self, switch, x10_config):
         """Initialize an X10 Switch."""
-        self._name = switch["name"]
-        self._id = switch["id"].upper()
-        self._state = False
-        self._config = x10_config
-        self._attr_unique_id = "X10."+ switch["id"].upper()
+        common_init(self,switch,x10_config)
 
     @property
     def name(self):
