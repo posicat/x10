@@ -1,13 +1,16 @@
 {
     "config": {
+        "error": {
+            "not_detected": "Could not connect to Heyu service."
+        },
         "step": {
             "user": {
-                "title": "Connect to the Heyu service",
+                "description": "Connect to the Heyu service",
                 "data": {
-                    "use_ssh": "Use SSH for remote call?",
-                    "ssh_host": "[%key:common::config_flow::data::host%]",
-                    "ssh_username": "[%key:common::config_flow::data::username%]",
-                    "ssh_password": "[%key:common::config_flow::data::password%]"
+                    "use_ssh": "Connect via SSH to Heyu running on another machine?",
+                    "ssh_host": "SSH Hostname or IP address",
+                    "ssh_username": "SSH Username",
+                    "ssh_password": "SSH Password"
                 }
             }
         }

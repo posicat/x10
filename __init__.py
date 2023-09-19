@@ -2,6 +2,9 @@
 from __future__ import annotations
 import voluptuous as vol
 
+from .const import *
+from .common import *
+
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.typing import ConfigType
@@ -16,7 +19,7 @@ import logging
 
 _LOGGER = logging.getLogger(__name__)
 
-from homeassistant.const import CONF_ID, CONF_NAME, CONF_TYPE, CONF_DEVICES
+from homeassistant.const import Platform,CONF_ID, CONF_NAME, CONF_TYPE, CONF_DEVICES, EVENT_HOMEASSISTANT_STOP
 from .const import *
 from .common import *
 
@@ -49,45 +52,43 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Hello World from a config entry."""
-    # Store an instance of the "connecting" class that does the work of speaking
-    # with your actual devices.
+    """Set up x10 from a config entry."""
 
-    _LOGGER.debug("Entry : " + str(entry))
-    _LOGGER.debug("hass : " + str(hass))
+    x10_config = entry.data
+    _LOGGER.debug("async_setup_entry x10_config : " + str(x10_config))
+
+    # x10_process = X10_Process(hass, x10_config)
+
+    # async def async_shutdown(event):
+    #         # Handle shutdown
+    #         await x10_config[X10_PROCESS].stop()
+
+    # hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, async_shutdown)
+
+    # x10_config[X10_PROCESS] = x10_process
+
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
 
-def setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Your controller/hub specific code."""
-    
-    success = True
+class X10_Process:
+      
+    def __init__(self, hass : HomeAssistant, properties):
+        self._hass = hass
+        self._properties = properties
+        self._callbacks = set()
 
-    # # Data that you want to share with your platforms
-    # hass.data[DOMAIN] = {}
-    # x10_config = {}
-    # x10_config[CONF_DEVICES] = {}
-    
-    # for conf in config[DOMAIN]:
-    #     x10_config[CONFIG_USE_SSH] = conf.get(CONFIG_USE_SSH)
-    #     x10_config[CONFIG_SSH_HOST] = conf.get(CONFIG_SSH_HOST)
-    #     x10_config[CONFIG_SSH_USERNAME] = conf.get(CONFIG_SSH_USERNAME)
-    #     x10_config[CONFIG_SSH_PASSWORD] = conf.get(CONFIG_SSH_PASSWORD)
-    #     for device in conf.get(CONF_DEVICES):
-    #         type = device[CONF_TYPE]
+        _LOGGER.debug("__init__ _properties : " + str(properties))
 
-    #         if (type == TYPE_APPLIANCE): # X10 calls them appliances, in HA they're switches
-    #             type = TYPE_SWITCH
-    #         if (not type in x10_config[CONF_DEVICES]):
-    #             x10_config[CONF_DEVICES][type] = []
+        # self._x10 = X10_Start_Monitor(properties.get(ATTR_DEVICE_PATH, ""), properties.get(CONF_HOST, ""), properties.get(CONF_PORT, 0))        
+        # self._x10.register_process_callback(self._process_update)
 
-    #         x10_config[CONF_DEVICES][type].append(device)
+        # self._heyu_monitor = self._hass.loop.create_task(self._x10.heyu_monitor_read())
 
-    # hass.data[DOMAIN] = x10_config;
-    # # _LOGGER.debug("Domain: " + str(hass.data[DOMAIN]))
-    
-    # hass.helpers.discovery.load_platform('sensor', DOMAIN, {}, config)
-    # hass.helpers.discovery.load_platform('light', DOMAIN, {}, config)
-    # hass.helpers.discovery.load_platform('switch', DOMAIN, {}, config)
-       
-    return success
+    async def stop(self):
+        # self._heyu_monitor.cancel()
+
+        await self._x10.close()
+
+    def _process_update(self, type, response) -> None:
+        LOGGER.debug("_process_update self : " + str(self.x10_config))

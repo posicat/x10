@@ -1,11 +1,14 @@
 import logging
 import paramiko
 
-from homeassistant.const import CONF_ID, CONF_NAME, CONF_TYPE, CONF_DEVICES
+from homeassistant.const import Platform, CONF_ID, CONF_NAME, CONF_TYPE, CONF_DEVICES
 from .const import *
 from .common import *
 
 _LOGGER = logging.getLogger(__name__)
+
+#PLATFORMS: list[str] = [Platform.SENSOR, Platform.LIGHT, Platform.SWITCH]
+PLATFORMS: list[str] = [Platform.SENSOR]
 
 def x10_command(x10_config, command):
     """Execute X10 command and check output."""
@@ -49,3 +52,6 @@ def common_init(self,device,x10_config):
     self._id = device["id"].upper()
     self._state = False
     self._config = x10_config
+
+def get_devices(x10_config,type):
+    return x10_config[CONFIG_DEVICES][type] | {};
