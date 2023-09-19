@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import logging
+import json 
+
 from subprocess import STDOUT, CalledProcessError, check_output
 from typing import Any
 from homeassistant.core import HomeAssistant
 
-from homeassistant.const import CONF_ID, CONF_NAME, CONF_TYPE, CONF_DEVICES
+from homeassistant.const import Platform, CONF_ID, CONF_NAME, CONF_TYPE, CONF_DEVICES
 from .const import *
 from .common import *
 
@@ -21,26 +23,18 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 _LOGGER = logging.getLogger(__name__)
 
-def setup_platform(
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: ConfigType,
-    add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
-) -> None:
-    """Set up the x10 Sensor platform."""
+    entry: ConfigEntry,
+    async_add_entities,
+):
+    """Setup sensors from a config entry created in the integrations UI."""
+    x10_config = entry.data
 
-    x10_config = hass.data[DOMAIN]
+    sensors = get_devices(x10_config,Platform.SENSOR)
+    _LOGGER.debug("async_setup_entry " + str(sensors))
 
-    _LOGGER.info("Config: " + str(x10_config))
-
-    x10_config['is_cm11a'] = True
-    try:
-        x10_command(x10_config,"info")
-    except CalledProcessError as err:
-        _LOGGER.info("Assuming that the device is CM17A: %s", err.output)
-        x10_config['is_cm11a'] = False
-
-    add_entities(X10Sensor(sensor, x10_config) for sensor in x10_config[CONF_DEVICES][TYPE_SENSOR])
+    async_add_entities(X10Sensor(sensor, x10_config) for sensor in sensors)
 
 
 class X10Sensor(SensorEntity):
@@ -48,11 +42,8 @@ class X10Sensor(SensorEntity):
 
     def __init__(self, sensor, x10_config):
         """Initialize an X10 Sensor."""
-        self._name = sensor["name"]
-        self._id = sensor["id"].upper()
-        self._state = False
-        self._config = x10_config
-        self._attr_unique_id = "X10."+ sensor["id"].upper()
+        _LOGGER.debug("__init__ " + str(sensor))
+        common_init(self,sensor,x10_config)
 
     @property
     def name(self):

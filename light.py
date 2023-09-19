@@ -23,27 +23,19 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 _LOGGER = logging.getLogger(__name__)
 
-def setup_platform(
+
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: ConfigType,
-    add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
-) -> None:
-    """Set up the x10 Light platform."""
+    entry: ConfigEntry,
+    async_add_entities,
+):
+    """Setup lights from a config entry created in the integrations UI."""
+    x10_config = entry.data
 
-    x10_config = hass.data[DOMAIN]
+    lights = get_devices(x10_config,Platform.LIGHT)
+    _LOGGER.debug("async_setup_entry " + str(lights))
 
-    _LOGGER.info("Config: " + str(x10_config))
-
-    x10_config['is_cm11a'] = True
-    try:
-        x10_command(x10_config,"info")
-    except CalledProcessError as err:
-        _LOGGER.info("Assuming that the device is CM17A: %s", err.output)
-        x10_config['is_cm11a'] = False
-
-    add_entities(X10Light(light, x10_config) for light in x10_config[CONF_DEVICES][TYPE_LIGHT])
-
+    async_add_entities(X10Light(light, x10_config) for light in lights)
 
 class X10Light(LightEntity):
     """Representation of an X10 Light."""
@@ -53,12 +45,8 @@ class X10Light(LightEntity):
 
     def __init__(self, light, x10_config):
         """Initialize an X10 Light."""
-        self._name = light["name"]
-        self._id = light["id"].upper()
+        common_init(self,light,x10_config)
         self._brightness = 0
-        self._state = False
-        self._config = x10_config
-        self._attr_unique_id = "X10."+ light["id"].upper()
 
     @property
     def name(self):

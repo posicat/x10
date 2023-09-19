@@ -1,0 +1,46 @@
+{
+    "config": {
+        "error": {
+            "not_detected": "Could not connect to Heyu service."
+        },
+        "step": {
+            "user": {
+                "description": "Connect to the Heyu service",
+                "data": {
+                    "use_ssh": "Connect via SSH to Heyu running on another machine?",
+                    "ssh_host": "SSH Hostname or IP address",
+                    "ssh_username": "SSH Username",
+                    "ssh_password": "SSH Password"
+                }
+            }
+        }
+    },
+    "options" : {
+        "step": {
+            "configMenu": {
+                "menu_options":{
+                    "addDevice" : "Add a new device",
+                    "editDevice": "Edit existing device"
+                }
+            },
+            "addDevice": {
+                "description": "Add a device to the X10 integration",
+                "data": {
+                    "name": "Device Name",
+                    "housecode": "Module housecode (A-P)",
+                    "number": "Module ID (1-16)",
+                    "type": "Module Type"
+                }
+            },
+            "editDevice": {
+                "description": "Edit existing Device"
+            },
+            "user": {
+                "menu_options": {
+                  "discovery": "Discovery",
+                  "manual": "Manual ({model})"
+                }
+              }
+        }
+    }
+}
