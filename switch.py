@@ -21,27 +21,18 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 _LOGGER = logging.getLogger(__name__)
 
-def setup_platform(
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: ConfigType,
-    add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
-) -> None:
-    """Set up the x10 switch platform."""
+    entry: ConfigEntry,
+    async_add_entities,
+):
+    """Setup sensors from a config entry created in the integrations UI."""
+    x10_config = entry.data
 
-    x10_config = hass.data[DOMAIN]
+    switches = get_devices(x10_config,Platform.SWITCH)
+    _LOGGER.debug("async_setup_entry " + str(switches))
 
-    _LOGGER.info("Config: " + str(x10_config))
-
-    x10_config['is_cm11a'] = True
-    try:
-        x10_command(x10_config,"info")
-    except CalledProcessError as err:
-        _LOGGER.info("Assuming that the device is CM17A: %s", err.output)
-        x10_config['is_cm11a'] = False
-
-    add_entities(X10Switch(switch, x10_config) for switch in x10_config[CONF_DEVICES][TYPE_SWITCH])
-
+    async_add_entities(X10Switch(switch, x10_config) for switch in switches)
 
 class X10Switch(SwitchEntity):
     """Representation of an X10 Switch."""

@@ -12,6 +12,15 @@ from .common import *
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 
+from homeassistant.helpers.selector import (
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+    SelectOptionDict
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,10 +55,65 @@ def _heyu_schema() -> vol.Schema:
 def _device_schema() -> vol.Schema:
     return vol.Schema(
         {
-            vol.Optional(CONFIG_DEVICE_NAME): str,
-            vol.Optional(CONFIG_MODULE_HOUSECODE): str,
-            vol.Optional(CONFIG_MODULE_NUMBER): str,
-            vol.Optional(CONFIG_MODULE_TYPE): str,
+            vol.Required(CONFIG_DEVICE_NAME): str,
+            vol.Required(CONFIG_MODULE_HOUSECODE): 
+                SelectSelector(
+                    SelectSelectorConfig(
+                        options=[
+                            SelectOptionDict(value="A", label="A"),
+                            SelectOptionDict(value="B", label="B"),
+                            SelectOptionDict(value="C", label="C"),
+                            SelectOptionDict(value="D", label="D"),
+                            SelectOptionDict(value="E", label="E"),
+                            SelectOptionDict(value="F", label="F"),
+                            SelectOptionDict(value="G", label="G"),
+                            SelectOptionDict(value="H", label="H"),
+                            SelectOptionDict(value="I", label="I"),
+                            SelectOptionDict(value="J", label="J"),
+                            SelectOptionDict(value="K", label="K"),
+                            SelectOptionDict(value="L", label="L"),
+                            SelectOptionDict(value="M", label="M"),
+                            SelectOptionDict(value="N", label="N"),
+                            SelectOptionDict(value="O", label="O"),
+                            SelectOptionDict(value="P", label="P"),
+                        ]
+                    )
+                ),
+            vol.Required(CONFIG_MODULE_NUMBER) : 
+                SelectSelector(
+                    SelectSelectorConfig(
+                        options=[
+                            SelectOptionDict(value="1", label="1"),
+                            SelectOptionDict(value="2", label="2"),
+                            SelectOptionDict(value="3", label="3"),
+                            SelectOptionDict(value="4", label="4"),
+                            SelectOptionDict(value="5", label="5"),
+                            SelectOptionDict(value="6", label="6"),
+                            SelectOptionDict(value="7", label="7"),
+                            SelectOptionDict(value="8", label="8"),
+                            SelectOptionDict(value="9", label="9"),
+                            SelectOptionDict(value="10", label="10"),
+                            SelectOptionDict(value="11", label="11"),
+                            SelectOptionDict(value="12", label="12"),
+                            SelectOptionDict(value="13", label="13"),
+                            SelectOptionDict(value="14", label="14"),
+                            SelectOptionDict(value="15", label="15"),
+                            SelectOptionDict(value="16", label="16"),
+                        ]
+                    ),
+                ),
+            vol.Required(CONFIG_MODULE_TYPE): 
+                SelectSelector(
+                    SelectSelectorConfig(
+                        options=[
+                            SelectOptionDict(value=TYPE_LIGHT, label="Light"),
+                            SelectOptionDict(value=TYPE_SWITCH, label="Switch"),
+                            SelectOptionDict(value=TYPE_APPLIANCE, label="Appliance"),
+                            SelectOptionDict(value=TYPE_SENSOR, label="Sensor")
+                        ],
+                        mode=SelectSelectorMode.DROPDOWN
+                    )
+                ) 
         },
     )
 
@@ -80,14 +144,12 @@ class X10ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if not errors:
                 self.x10_config.update(user_input)
                 self.x10_config[CONFIG_DEVICES] = {}
-                self.x10_config[CONFIG_DEVICES][TYPE_LIGHT] = {}
-                self.x10_config[CONFIG_DEVICES][TYPE_SWITCH] = {}
-                self.x10_config[CONFIG_DEVICES][TYPE_SENSOR] = {}
+                self.x10_config[CONFIG_DEVICES][TYPE_LIGHT] = []
+                self.x10_config[CONFIG_DEVICES][TYPE_SWITCH] = []
+                self.x10_config[CONFIG_DEVICES][TYPE_SENSOR] = []
                 _LOGGER.debug("Save Config : " + str(self.x10_config))
                 return self.async_create_entry(title=DOMAIN, data=self.x10_config)
             
-            return self.async_show_form(step_id="user", data_schema=_heyu_schema(), errors=errors)
-
         return self.async_show_form(step_id="user", data_schema=_heyu_schema(), errors=errors)
     
     async def async_step_device(self, user_input: dict[str, Any] | None = None):
@@ -127,20 +189,65 @@ class X10OptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
         self.x10_config = config_entry.data
-        self._errors: dict[str, Any] = {}
+
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
+        errors = {}
         """Manage the options."""
         if user_input is not None:
-            # Do stuff here
+            _LOGGER.debug("asi" + str(user_input))
             return self.async_create_entry(title=DOMAIN, data=self.x10_config)
 
         config_schema = generate_config_schema(self.x10_config)
 
+        return await self.async_step_configMenu({})
 
-        return self.async_show_form(step_id="device", data_schema=_device_schema(), errors=errors)
+        return self.async_show_form(step_id="init", data_schema=generate_config_schema(self.x10_config), errors=errors)
+
+    async def async_step_configMenu(self, user_input=None):
+        return self.async_show_menu(
+            step_id="configMenu",
+            menu_options=["addDevice", "editDevice"]
+        )
+
+    async def async_step_addDevice(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        errors = {}
+        """Manage the options."""
+        if user_input is not None:
+            _LOGGER.debug("asaD" + str(user_input))
+
+            devices = self.x10_config[CONFIG_DEVICES][user_input[CONFIG_MODULE_TYPE]]
+
+            for device in devices:
+                _LOGGER.debug("asaD device" + str(device))
+
+                if (device[CONFIG_MODULE_HOUSECODE] == user_input[CONFIG_MODULE_HOUSECODE] 
+                    and device[CONFIG_MODULE_NUMBER] == user_input[CONFIG_MODULE_NUMBER]):
+                    _LOGGER.debug("Module already exists " + str(device))
+                    errors["update"] = "Module already exists"
+                    return
+    
+            add_device(self.x10_config,user_input)
+            return self.async_create_entry(title=DOMAIN, data=self.x10_config)
+
+        return self.async_show_form(step_id="addDevice", data_schema=_device_schema(), errors=errors)
+
+    async def async_step_editDevice(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        errors = {}
+        """Manage the options."""
+        if user_input is not None:
+            _LOGGER.debug("aseD" + str(user_input))
+            return self.async_create_entry(title=DOMAIN, data=self.x10_config)
+
+        config_schema = _device_schema()
+
+        return self.async_show_form(step_id="editDevice", data_schema=generate_device_list(self.x10_config), errors=errors)
     
 class CannotConnect(exceptions.HomeAssistantError):
     """Error to indicate we cannot connect."""

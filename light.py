@@ -23,21 +23,19 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 _LOGGER = logging.getLogger(__name__)
 
+
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: config_entries.ConfigEntry,
+    entry: ConfigEntry,
     async_add_entities,
 ):
     """Setup lights from a config entry created in the integrations UI."""
-    x10_config=hass.data[DOMAIN]
+    x10_config = entry.data
 
-    _LOGGER.info("Config: " + str(x10_config))
+    lights = get_devices(x10_config,Platform.LIGHT)
+    _LOGGER.debug("async_setup_entry " + str(lights))
 
-    # session = async_get_clientsession(hass)
-
-
-    add_entities(X10Light(light, x10_config) for light in x10_config[CONF_DEVICES][TYPE_LIGHT])
-
+    async_add_entities(X10Light(light, x10_config) for light in lights)
 
 class X10Light(LightEntity):
     """Representation of an X10 Light."""

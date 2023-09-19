@@ -29,11 +29,11 @@ async def async_setup_entry(
     async_add_entities,
 ):
     """Setup sensors from a config entry created in the integrations UI."""
-    x10_config = entry.data | {}
-
-    # session = async_get_clientsession(hass)
+    x10_config = entry.data
 
     sensors = get_devices(x10_config,Platform.SENSOR)
+    _LOGGER.debug("async_setup_entry " + str(sensors))
+
     async_add_entities(X10Sensor(sensor, x10_config) for sensor in sensors)
 
 
@@ -42,6 +42,7 @@ class X10Sensor(SensorEntity):
 
     def __init__(self, sensor, x10_config):
         """Initialize an X10 Sensor."""
+        _LOGGER.debug("__init__ " + str(sensor))
         common_init(self,sensor,x10_config)
 
     @property
